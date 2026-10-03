@@ -100,9 +100,15 @@ export function useWorkspaceViewModel(repository?: WorkspaceRepository): Workspa
 
   const addItem = useCallback((type: DeviceType) => {
     if (!activePlan) return
-    const draft = createMaterialDraft(type, activePlan.items.length)
-    updateActivePlan((plan) => ({ ...plan, items: [...plan.items, draft.item] }), draft.feedback)
-    setSelectedItemId(draft.item.id)
+    const draft = createMaterialDraft(type, activePlan)
+    if (!draft.canPlace || !draft.item) {
+      // 桌面确实放不下：不要先塞进去再报红点，只明确告知用户。
+      setFeedback(draft.feedback)
+      return
+    }
+    const addedItem = draft.item
+    updateActivePlan((plan) => ({ ...plan, items: [...plan.items, addedItem] }), draft.feedback)
+    setSelectedItemId(addedItem.id)
   }, [activePlan, updateActivePlan])
 
   const removeItem = useCallback((id: string) => {
