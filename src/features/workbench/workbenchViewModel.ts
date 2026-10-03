@@ -12,7 +12,7 @@ import {
 } from '../../shared/models'
 import { clampDeskSize, clampItemDimension } from '../../shared/layoutRules'
 import { moveCanvasItem, rotateCanvasItem } from '../canvas/canvasViewModel'
-import { createMaterialDraft } from '../materials/materialsViewModel'
+import { createMaterialDraft, getMaterialRejectFeedback } from '../materials/materialsViewModel'
 import { inspectPlan } from '../inspection/inspectionViewModel'
 import { LocalWorkspaceRepository, type WorkspaceRepository } from './workspaceRepository'
 
@@ -100,7 +100,12 @@ export function useWorkspaceViewModel(repository?: WorkspaceRepository): Workspa
 
   const addItem = useCallback((type: DeviceType) => {
     if (!activePlan) return
-    const draft = createMaterialDraft(type, activePlan.items.length)
+    const draft = createMaterialDraft(type, activePlan)
+    // 找不到真正放得下的位置时，明确告诉用户，而不是先塞进去再报冲突
+    if (!draft) {
+      setFeedback(getMaterialRejectFeedback(type))
+      return
+    }
     updateActivePlan((plan) => ({ ...plan, items: [...plan.items, draft.item] }), draft.feedback)
     setSelectedItemId(draft.item.id)
   }, [activePlan, updateActivePlan])
